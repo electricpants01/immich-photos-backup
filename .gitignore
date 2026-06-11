@@ -1,0 +1,35 @@
+# ─── Immich Data (NO subir — son GBs de datos) ───
+library/
+postgres/
+
+# ─── Secrets & Config ───
+.env
+
+# ─── IDE & Editor ───
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── macOS ───
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# ─── Python ───
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# ─── Docker ───
+model-cache/
+
+# ─── Temp Files ───
+*.tar
+*.tmp
+/tmp/

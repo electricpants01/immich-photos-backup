@@ -1,0 +1,83 @@
+# Cline Rules — Immich Docker Deployment
+
+## Context
+This is an Immich (self-hosted photo manager) deployment using Docker Compose on macOS.
+The project lives at `/Users/chrismac/AndroidStudioProjects/immich`.
+
+## Core Constraints
+1. **NEVER run `docker compose up -d` without `--pull never`** — Docker cannot reach `ghcr.io` from this network due to TLS timeout in its internal proxy.
+2. **DO NOT modify `./library/` or `./postgres/` manually** — Immich manages these internally.
+3. **The docker-compose.yml has `@sha256:` digests stripped** — keep them removed or images won't match.
+4. **Timezone is `America/La_Paz`** — do not change without user consent.
+5. **Images are tagged as `:release`** (not `:latest` or `:v2`).
+
+## Image Pulling Workflow (when needed)
+If new images are needed from ghcr.io:
+```bash
+python3 AI/pull-images.py ghcr.io immich-app/immich-server release
+python3 AI/pull-images.py ghcr.io immich-app/immich-machine-learning release
+python3 AI/pull-images.py ghcr.io immich-app/postgres 14-vectorchord0.4.3-pgvectors0.2.0
+# valkey pulls from Docker Hub (works fine):
+docker pull docker.io/valkey/valkey:9
+```
+Then tag and start:
+```bash
+docker tag <id> ghcr.io/immich-app/<name>:release
+docker compose up -d --pull never
+```
+
+## Backup & Restore (S3)
+
+### Backup (upload to S3)
+```bash
+python3 backup-to-s3.py              # Full: photos + DB + config
+python3 backup-to-s3.py --dry-run    # Preview only
+python3 backup-to-s3.py --db-only    # Database only
+python3 backup-to-s3.py --lib-only   # Photos only
+```
+Uploads to `s3://$S3_BUCKET/` (from `.env`):
+- `library/` → photos (incremental, skips unchanged)
+- `database/` → pg_dump SQL gzipped (keeps last 7)
+- `config/` → .env, docker-compose.yml, pull-images.py
+
+### Restore (from S3 to new machine)
+```bash
+python3 restore-from-s3.py              # Full restore
+python3 restore-from-s3.py --dry-run    # Preview only
+python3 restore-from-s3.py --skip-pull  # Skip image download
+```
+Downloads config from S3 first (fallback to GitHub), pulls images, syncs photos, restores DB, starts Immich.
+
+## Project Structure
+```
+immich/
+├── docker-compose.yml        # 4 services
+├── .env                      # UPLOAD_LOCATION, DB_PASSWORD, TZ, IMMICH_VERSION
+├── backup-to-s3.py           # 🔄 Backup → S3 (photos + DB + config)
+├── restore-from-s3.py        # 🔥 Disaster recovery ← S3
+├── library/                  # Uploaded photos (Immich-managed, DO NOT TOUCH)
+├── postgres/                 # Database files (Immich-managed, DO NOT TOUCH)
+└── AI/                       # Documentation & tools
+    ├── immich-knowledge.md
+    ├── disaster-recovery.md
+    ├── docker-network-fix.md
+    ├── commands-cheatsheet.md
+    └── pull-images.py
+```
+
+## Quick Reference
+- Web: `http://localhost:2283`
+- Start: `docker compose up -d --pull never`
+- Stop: `docker compose down`
+- Status: `docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'`
+- Logs: `docker compose logs -f`
+- Config: `cat .env` or `docker compose config`
+- Backup: `python3 backup-to-s3.py`
+- Restore: `python3 restore-from-s3.py`
+
+## Network Architecture
+- Docker Desktop uses internal proxy `http.docker.internal:3128` for pulls
+- Docker Hub works, ghcr.io times out on TLS handshake
+- Host CAN reach ghcr.io (curl works)
+- Containers CAN reach ghcr.io (wget from busybox works)
+- Only Docker's pull mechanism is broken

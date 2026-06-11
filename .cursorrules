@@ -1,0 +1,51 @@
+# Immich Docker Deployment — Cursor Rules
+
+## Project Overview
+Self-hosted photo/video management (Google Photos alternative) deployed via Docker Compose.
+
+## Key Files
+- `docker-compose.yml` — 4 services: immich-server, immich-machine-learning, redis, database
+- `.env` — Environment variables (IMMICH_VERSION, TZ, DB_PASSWORD, UPLOAD_LOCATION)
+- `AI/` — Documentation, scripts, and cheat sheets for this deployment
+
+## Core Commands
+```bash
+# Start (never pull — network issues with ghcr.io in Bolivia)
+docker compose up -d --pull never
+
+# Status
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
+
+# Logs
+docker compose logs -f immich-server
+
+# Stop
+docker compose down
+```
+
+## Known Issues
+- Docker Desktop's internal proxy (`http.docker.internal:3128`) causes TLS handshake timeout
+  with `ghcr.io` from Bolivia (high latency). Docker Hub works fine.
+- Use `AI/pull-images.py` to download ghcr.io images via direct HTTP API when needed.
+- The `docker-compose.yml` has `@sha256:` digests removed to match locally loaded images.
+
+## Configuration
+- Web UI: `http://localhost:2283`
+- Timezone: `America/La_Paz`
+- Photos stored in: `./library/` (never modify manually — use app/web/CLI)
+- DB data in: `./postgres/` (never use network shares)
+
+## When Making Changes
+- Always test with `docker compose config` before applying
+- After image changes, tag with `docker tag <id> ghcr.io/immich-app/<name>:release`
+- DO NOT restore `@sha256:` digests in docker-compose.yml — they cause pull failures
+- Reference `AI/` folder for context before troubleshooting
+- Use `--pull never` flag to prevent Docker from trying to reach ghcr.io
+
+## Services
+| Name | Image | Port |
+|---|---|---|
+| immich_server | ghcr.io/immich-app/immich-server:release | 2283 |
+| immich_machine_learning | ghcr.io/immich-app/immich-machine-learning:release | — |
+| immich_postgres | ghcr.io/immich-app/postgres:14-vectorchord... | 5432 |
+| immich_redis | docker.io/valkey/valkey:9 | 6379 |

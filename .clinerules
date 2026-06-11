@@ -2,7 +2,7 @@
 
 ## Context
 This is an Immich (self-hosted photo manager) deployment using Docker Compose on macOS.
-The project lives at `/Users/chrismac/AndroidStudioProjects/immich`.
+The project lives at `$PROJECT_DIR` (set by the scripts dynamically).
 
 ## Core Constraints
 1. **NEVER run `docker compose up -d` without `--pull never`** — Docker cannot reach `ghcr.io` from this network due to TLS timeout in its internal proxy.

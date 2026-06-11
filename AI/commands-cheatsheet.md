@@ -4,7 +4,7 @@
 
 ```bash
 # Iniciar (sin intentar pull de internet)
-cd /Users/chrismac/AndroidStudioProjects/immich && docker compose up -d --pull never
+cd ~/immich && docker compose up -d --pull never
 
 # Detener
 docker compose down
@@ -92,16 +92,16 @@ curl -s http://localhost:2283 | head -5
 
 ```bash
 # Ver qué hay en S3
-aws s3 ls s3://immich-backup-photos-aa12c3/
-aws s3 ls s3://immich-backup-photos-aa12c3/config/
-aws s3 ls s3://immich-backup-photos-aa12c3/database/
+aws s3 ls s3://$S3_BUCKET/
+aws s3 ls s3://$S3_BUCKET/config/
+aws s3 ls s3://$S3_BUCKET/database/
 
 # Bajar archivos de config manualmente
-aws s3 cp s3://immich-backup-photos-aa12c3/config/.env .env
-aws s3 cp s3://immich-backup-photos-aa12c3/config/docker-compose.yml docker-compose.yml
+aws s3 cp s3://$S3_BUCKET/config/.env .env
+aws s3 cp s3://$S3_BUCKET/config/docker-compose.yml docker-compose.yml
 
 # Sincronizar fotos
-aws s3 sync s3://immich-backup-photos-aa12c3/library ./library
+aws s3 sync s3://$S3_BUCKET/library ./library
 ```
 
 ## Troubleshooting

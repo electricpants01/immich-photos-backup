@@ -47,9 +47,9 @@ Si preferís hacerlo manualmente o debuggear:
 mkdir ~/immich && cd ~/immich
 
 # Bajar config desde S3
-aws s3 cp s3://immich-backup-photos-aa12c3/config/.env .env
-aws s3 cp s3://immich-backup-photos-aa12c3/config/docker-compose.yml docker-compose.yml
-aws s3 cp s3://immich-backup-photos-aa12c3/config/pull-images.py pull-images.py
+aws s3 cp s3://$S3_BUCKET/config/.env .env
+aws s3 cp s3://$S3_BUCKET/config/docker-compose.yml docker-compose.yml
+aws s3 cp s3://$S3_BUCKET/config/pull-images.py pull-images.py
 ```
 
 Si no están en S3, bajalos de GitHub:
@@ -86,14 +86,14 @@ docker pull docker.io/valkey/valkey:9
 ### Paso 4 — Sincronizar fotos
 
 ```bash
-aws s3 sync s3://immich-backup-photos-aa12c3/library ./library
+aws s3 sync s3://$S3_BUCKET/library ./library
 ```
 
 ### Paso 5 — Restaurar DB
 
 ```bash
 # Bajar dump más reciente
-aws s3 cp s3://immich-backup-photos-aa12c3/database/immich-db-YYYY-MM-DD_HHMMSS.sql.gz .
+aws s3 cp s3://$S3_BUCKET/database/immich-db-YYYY-MM-DD_HHMMSS.sql.gz .
 gunzip immich-db-*.sql.gz
 
 # Iniciar solo postgres

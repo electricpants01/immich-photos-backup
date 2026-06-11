@@ -1,6 +1,6 @@
 # 🖼️ Immich — Guía Completa de Instalación y Uso
 
-> **Proyecto**: `/Users/chrismac/AndroidStudioProjects/immich`
+> **Proyecto**: `~/immich`
 > **Fecha**: Junio 2026
 > **Immich**: Self-hosted photo & video management (Google Photos alternative)
 
@@ -45,7 +45,7 @@ Define los 4 servicios. Configuración clave:
 
 ```bash
 # Iniciar Immich
-cd /Users/chrismac/AndroidStudioProjects/immich
+cd ~/immich
 docker compose up -d --pull never
 
 # Ver estado

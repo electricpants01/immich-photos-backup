@@ -39,6 +39,7 @@ def load_env():
 
 load_env()
 BUCKET_NAME = os.environ.get("S3_BUCKET")
+DEEP_BUCKET_NAME = BUCKET_NAME + "-deep"  # Backup adicional en Deep Archive
 if not BUCKET_NAME:
     print("ERROR: S3_BUCKET no está definido en .env")
     sys.exit(1)
@@ -140,7 +141,12 @@ def backup_library(dry_run=False):
         try:
             s3.upload_file(
                 str(filepath), BUCKET_NAME, key,
-                ExtraArgs={"StorageClass": "STANDARD_IA"}
+                ExtraArgs={"StorageClass": "GLACIER_IR"}
+            )
+            # Copia deep archive
+            s3.upload_file(
+                str(filepath), DEEP_BUCKET_NAME, key,
+                ExtraArgs={"StorageClass": "GLACIER_IR"}
             )
             uploaded += 1
             total_bytes += filepath.stat().st_size
@@ -214,9 +220,13 @@ def backup_database(dry_run=False):
         key = f"database/{dump_name}"
         s3.upload_file(
             tmp_path, BUCKET_NAME, key,
-            ExtraArgs={"StorageClass": "STANDARD_IA"}
+            ExtraArgs={"StorageClass": "GLACIER_IR"}
         )
-        log(f"  Subido: s3://{BUCKET_NAME}/{key}", "✅")
+        s3.upload_file(
+            tmp_path, DEEP_BUCKET_NAME, key,
+            ExtraArgs={"StorageClass": "GLACIER_IR"}
+        )
+        log(f"  Subido: s3://{BUCKET_NAME}/{key} + deep", "✅")
         
         # 4. Limpiar dumps viejos (mantener últimos 7)
         cleanup_old_dumps(s3)
@@ -262,7 +272,12 @@ def backup_config(dry_run=False):
         try:
             s3.upload_file(
                 str(filepath), BUCKET_NAME, key,
-                ExtraArgs={"StorageClass": "STANDARD_IA"}
+                ExtraArgs={"StorageClass": "GLACIER_IR"}
+            )
+            # Copia deep archive
+            s3.upload_file(
+                str(filepath), DEEP_BUCKET_NAME, key,
+                ExtraArgs={"StorageClass": "GLACIER_IR"}
             )
             log(f"  {filepath.name} → OK ({filepath.stat().st_size} bytes)", "✅")
             uploaded += 1

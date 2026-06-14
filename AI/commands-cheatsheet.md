@@ -126,3 +126,42 @@ curl -I https://ghcr.io
 # Verificar conectividad a ghcr.io (desde Docker)
 docker run --rm busybox wget -O- https://ghcr.io
 ```
+
+## Google Takeout Import
+
+```bash
+# 1. Generar XMP sidecars (GPS, fechas) desde JSON de Takeout
+python3 generate-xmp-sidecars.py /ruta/takeout
+
+# 2. Subir a Immich (con álbumes automáticos por carpeta)
+immich upload -r -a "/ruta/takeout"
+
+# 3. Actualizar metadata (fechas, GPS, descripciones) en assets existentes
+python3 update-takeout-metadata.py /ruta/takeout
+
+# Ver qué haría sin aplicar cambios
+python3 update-takeout-metadata.py --dry-run /ruta/takeout
+```
+
+## S3 — Bucket Deep Archive
+
+```bash
+# Bucket principal (GLACIER_IR — restauración instantánea)
+aws s3 ls s3://immich-backup-photos-aa12c3 --recursive --summarize | tail -3
+
+# Bucket deep (DEEP_ARCHIVE — última línea de defensa)
+aws s3 ls s3://immich-backup-photos-aa12c3-deep --recursive --summarize | tail -3
+
+# Sincronizar manualmente al bucket deep
+aws s3 sync s3://immich-backup-photos-aa12c3 s3://immich-backup-photos-aa12c3-deep --storage-class GLACIER_IR
+```
+
+## Monitoreo de Jobs
+
+```bash
+# Ver cola de jobs (thumbnail, metadata, faces, etc)
+curl -s http://localhost:2283/api/jobs -H "x-api-key: TU_API_KEY" | python3 -m json.tool
+
+# Reiniciar server si los workers se traban
+cd ~/immich && docker compose restart immich-server
+```
